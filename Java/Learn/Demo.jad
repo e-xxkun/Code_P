@@ -1,0 +1,19 @@
+// Decompiled by Jad v1.5.8g. Copyright 2001 Pavel Kouznetsov.
+// Jad home page: http://www.kpdus.com/jad.html
+// Decompiler options: packimports(3) 
+// Source File Name:   Demo.java
+
+
+public class Demo
+{
+
+    public Demo()
+    {
+    }
+
+    public static void main(String args[])
+    {
+        int i = (new Integer(10)).intValue();
+        Integer integer = Integer.valueOf(i);
+    }
+}
