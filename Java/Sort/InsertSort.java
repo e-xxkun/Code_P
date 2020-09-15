@@ -1,18 +1,14 @@
 import java.util.Arrays;
 public class InsertSort{
 
-    private static <T extends Comparable<? super T>> void swap(T[] arr,int p1,int p2) {
-        T tmp=arr[p1];
-        arr[p1]=arr[p2];
-        arr[p2]=tmp;
-    }
-
     public static <T extends Comparable<? super T>> void insertSort(T[] arr){
+        int j;
         for(int i=1;i<arr.length;i++){
-            int j=i;
-            while(j>0&&arr[j].compareTo(arr[--j])<0){
-                swap(arr,j,j+1);
+            T tmp=arr[i];
+            for(j=i;j>0 && tmp.compareTo(arr[j-1])<0;j--){
+                arr[j]=arr[j-1];
             }
+            arr[j]=tmp;
         }
     }
 
