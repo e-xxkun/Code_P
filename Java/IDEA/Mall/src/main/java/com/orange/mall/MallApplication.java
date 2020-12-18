@@ -1,4 +1,4 @@
-package com.xxkun.mall;
+package com.orange.mall;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
