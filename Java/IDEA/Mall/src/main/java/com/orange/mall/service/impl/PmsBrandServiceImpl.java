@@ -19,12 +19,28 @@ public class PmsBrandServiceImpl implements PmsBrandService {
     }
 
     @Override
-    public PmsBrand getBrandById(Long id) {
+    public PmsBrand getBrand(Long id) {
         return brandMapper.selectByPrimaryKey(id);
     }
 
     @Override
     public int createBrand(PmsBrand pmsBrand) {
         return brandMapper.insert(pmsBrand);
+    }
+
+    @Override
+    public int updateBrand(Long id, PmsBrand pmsBrand) {
+        pmsBrand.setId(id);
+        return brandMapper.updateByPrimaryKey(pmsBrand);
+    }
+
+    @Override
+    public int deleteBrand(Long id) {
+        return brandMapper.deleteByPrimaryKey(id);
+    }
+
+    @Override
+    public List<PmsBrand> listBrand(Integer pageNum, Integer pageSize) {
+        return null;
     }
 }
