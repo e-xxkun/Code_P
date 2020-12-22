@@ -10,4 +10,6 @@ public interface PmsBrandService {
     PmsBrand getBrandById(Long id);
 
     int createBrand(PmsBrand pmsBrand);
+
+    int updateBrand(Long id, PmsBrand pmsBrand);
 }

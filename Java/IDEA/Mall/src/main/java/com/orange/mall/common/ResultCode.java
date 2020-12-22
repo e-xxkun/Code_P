@@ -1,16 +1,16 @@
 package com.orange.mall.common;
 
 /**
- * ÇëÇó·µ»ØÂëÃ¶¾Ù»ã×Ü
+ * è¯·æ±‚è¿”å›ç æšä¸¾æ±‡æ€»
  * Create by xxkun on 2020/12/17
  */
 public enum ResultCode implements IResultCode {
 
-    SUCCESS(200, "ÇëÇó³É¹¦"),
-    FAILED(500, "ÇëÇóÊ§°Ü"),
-    VALIDATE_FAILED(404, "²ÎÊı¼ìÑéÊ§°Ü"),
-    UNAUTHORIZED(401, "ÔİÎ´µÇÂ¼»òtokenÒÑ¾­¹ıÆÚ"),
-    FORBIDDEN(403, "Ã»ÓĞÏà¹ØÈ¨ÏŞ");;
+    SUCCESS(200, "è¯·æ±‚æˆåŠŸ"),
+    FAILED(500, "è¯·æ±‚å¤±è´¥"),
+    VALIDATE_FAILED(404, "å‚æ•°æ£€éªŒå¤±è´¥"),
+    UNAUTHORIZED(401, "æš‚æœªç™»å½•æˆ–tokenå·²ç»è¿‡æœŸ"),
+    FORBIDDEN(403, "æ²¡æœ‰ç›¸å…³æƒé™");;
 
     private final long code;
     private final String message;

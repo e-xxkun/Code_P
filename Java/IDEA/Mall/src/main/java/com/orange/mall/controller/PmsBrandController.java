@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,9 +27,9 @@ public class PmsBrandController {
         return CommonResult.success(pmsBrandService.listAllBrand());
     }
 
-    @RequestMapping("")
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     @ResponseBody
-    public CommonResult<PmsBrand> getBrandById(Long id) {
+    public CommonResult<PmsBrand> getBrandById(@PathVariable("id") Long id) {
         return CommonResult.success(pmsBrandService.getBrandById(id));
     }
 
@@ -49,15 +50,15 @@ public class PmsBrandController {
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
     @ResponseBody
-    public CommonResult updateBrand(@PathVariable("id") Long id) {
+    public CommonResult updateBrand(@PathVariable("id") Long id, @RequestBody PmsBrand pmsBrand, BindingResult bindingResult) {
         CommonResult commonResult;
-        int count = pmsBrandService.createBrand(pmsBrand);
+        int count = pmsBrandService.updateBrand(id, pmsBrand);
         if (count == 1) {
             commonResult = CommonResult.success(pmsBrand);
-            LOGGER.debug("createBrand success:{}",pmsBrand);
+            LOGGER.debug("updateBrand success:{}",pmsBrand);
         } else {
             commonResult = CommonResult.failed();
-            LOGGER.debug("createBrand failed:{}",pmsBrand);
+            LOGGER.debug("updateBrand failed:{}",pmsBrand);
         }
         return commonResult;
     }
