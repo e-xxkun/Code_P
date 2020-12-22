@@ -4,6 +4,8 @@ import com.orange.mall.common.CommonPage;
 import com.orange.mall.common.CommonResult;
 import com.orange.mall.mbg.model.PmsBrand;
 import com.orange.mall.service.PmsBrandService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +13,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import javax.websocket.server.PathParam;
 import java.util.List;
 
+@Api("商品信息管理")
 @Controller
 @RequestMapping("/brand")
 public class PmsBrandController {
@@ -23,18 +25,21 @@ public class PmsBrandController {
 
     private  static final Logger LOGGER = LoggerFactory.getLogger(PmsBrandController.class);
 
+    @ApiOperation("获取所有品牌列表")
     @RequestMapping(value = "/listAll", method = RequestMethod.GET)
     @ResponseBody
     public CommonResult<List<PmsBrand>> getBrandList() {
         return CommonResult.success(pmsBrandService.listAllBrand());
     }
 
+    @ApiOperation("获取指定id的品牌详情")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     @ResponseBody
     public CommonResult<PmsBrand> brand(@PathVariable("id") Long id) {
         return CommonResult.success(pmsBrandService.getBrand(id));
     }
 
+    @ApiOperation("添加品牌")
     @RequestMapping(value = "/create", method = RequestMethod.POST)
     @ResponseBody
     public CommonResult createBrand(@RequestBody PmsBrand pmsBrand) {
@@ -50,6 +55,7 @@ public class PmsBrandController {
         return commonResult;
     }
 
+    @ApiOperation("更新指定id品牌信息")
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
     @ResponseBody
     public CommonResult updateBrand(@PathVariable("id") Long id, @RequestBody PmsBrand pmsBrand, BindingResult bindingResult) {
@@ -65,6 +71,7 @@ public class PmsBrandController {
         return commonResult;
     }
 
+    @ApiOperation("删除指定id的品牌")
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
     @ResponseBody
     public CommonResult deleteBrand(@PathVariable("id") Long id) {
@@ -80,6 +87,7 @@ public class PmsBrandController {
         return commonResult;
     }
 
+    @ApiOperation("分页查询品牌列表")
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     @ResponseBody
     public CommonResult<CommonPage<PmsBrand>> listBrand(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
