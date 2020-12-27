@@ -1,0 +1,10 @@
+{
+    "person_info":{
+        "email":1,
+        "id":1,
+        "phone":{
+            "number":1,
+            "address":2
+        }
+    }
+}
