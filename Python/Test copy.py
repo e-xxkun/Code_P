@@ -4,7 +4,7 @@ import matplotlib
 import xlrd
 
 # 打开文件
-data = xlrd.open_workbook('./Python/test1.xlsx')
+data = xlrd.open_workbook('./Python/附件3-问题2数据.xlsx')
 
 # 查看工作表
 data.sheet_names()
