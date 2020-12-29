@@ -62,7 +62,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     "/swagger-resources/**",
                     "/v2/api-docs/**"
             ).permitAll()
-            .antMatchers("/admin/login", "/admin/register")      //对登录注册要允许匿名访问
+            .antMatchers("/admin/login", "/admin/register", "/sso/**")      //对登录注册要允许匿名访问
             .permitAll()
             .antMatchers(HttpMethod.OPTIONS)        //跨域请求会先进行一次options请求
             .permitAll()
@@ -80,20 +80,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(restAuthenticationEntryPoint);
     }
 
-    public JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter(){
-        return new JwtAuthenticationTokenFilter();
-    }
-
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService())
                 .passwordEncoder(passwordEncoder());
     }
 
+    @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter(){
+        return new JwtAuthenticationTokenFilter();
+    }
+
+    @Bean
     @Override
     public UserDetailsService userDetailsService() {
         //获取登录用户信息

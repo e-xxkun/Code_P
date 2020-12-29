@@ -25,7 +25,7 @@ import java.io.IOException;
  * @description: JWT登录授权过滤器
  * @date 2020-12-23 20:07
  */
-@Component
+
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     private static final Logger LOGGER= LoggerFactory.getLogger(JwtAuthenticationTokenFilter.class);
     @Autowired
