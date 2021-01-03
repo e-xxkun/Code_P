@@ -1,6 +1,5 @@
 package com.orange.mall.mbg.model;
 
-
 public class PmsBrand {
     private Long id;
 

@@ -3,6 +3,7 @@ package com.orange.mall.service.impl;
 import com.orange.mall.nosql.elasticsearch.document.EsProduct;
 import com.orange.mall.service.EsProductService;
 import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
  * @description: EsProductService
  * @date 2021-01-03 16:42
  */
+@Service
 public class EsProductServiceImpl implements EsProductService {
     @Override
     public int importAll() {

@@ -1,7 +1,9 @@
 package com.orange.mall.service.impl;
 
+import com.github.pagehelper.PageHelper;
 import com.orange.mall.mbg.mapper.PmsBrandMapper;
 import com.orange.mall.mbg.model.PmsBrand;
+import com.orange.mall.mbg.model.PmsBrandExample;
 import com.orange.mall.service.PmsBrandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,7 @@ public class PmsBrandServiceImpl implements PmsBrandService {
 
     @Override
     public List<PmsBrand> listAllBrand() {
-        return brandMapper.listAllBrands();
+        return brandMapper.selectByExample(new PmsBrandExample());
     }
 
     @Override
@@ -41,6 +43,7 @@ public class PmsBrandServiceImpl implements PmsBrandService {
 
     @Override
     public List<PmsBrand> listBrand(Integer pageNum, Integer pageSize) {
-        return null;
+        PageHelper.startPage(pageNum, pageSize);
+        return listAllBrand();
     }
 }

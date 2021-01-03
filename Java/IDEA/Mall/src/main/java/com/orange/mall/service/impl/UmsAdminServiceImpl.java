@@ -25,12 +25,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @author xxkun
- * @creed Awaken the Giant Within
- * @description: UmsAdminService实现类
- * @date 2020-12-23 20:51
+ * UmsAdminService实现类
+ * Created by macro on 2018/4/26.
  */
-
 @Service
 public class UmsAdminServiceImpl implements UmsAdminService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UmsAdminServiceImpl.class);
@@ -58,7 +55,6 @@ public class UmsAdminServiceImpl implements UmsAdminService {
         return null;
     }
 
-
     @Override
     public UmsAdmin register(UmsAdmin umsAdminParam) {
         UmsAdmin umsAdmin = new UmsAdmin();
@@ -78,7 +74,6 @@ public class UmsAdminServiceImpl implements UmsAdminService {
         adminMapper.insert(umsAdmin);
         return umsAdmin;
     }
-
 
     @Override
     public String login(String username, String password) {
