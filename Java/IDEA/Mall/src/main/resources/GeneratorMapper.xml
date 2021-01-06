@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
 
 <generatorConfiguration>
-    <classPathEntry location="D:\IDE\apache-maven-3.6.3\repository\mysql\mysql-connector-java\8.0.15\mysql-connector-java-8.0.15.jar" />
+    <classPathEntry location="D:\IDE\Maven\repository\mysql\mysql-connector-java\8.0.15\mysql-connector-java-8.0.15.jar" />
     <context id="MySqlContext" targetRuntime="MyBatis3" defaultModelType="flat">
         <commentGenerator>
             <property name="suppressAllComments" value="true" />
@@ -42,6 +42,15 @@
             <generatedKey column="id" sqlStatement="MySql" identity="true"/>
         </table>
         <table tableName="ums_admin_permission_relation">
+            <generatedKey column="id" sqlStatement="MySql" identity="true"/>
+        </table>
+        <table tableName="pms_product">
+            <generatedKey column="id" sqlStatement="MySql" identity="true"/>
+        </table>
+        <table tableName="pms_product_attribute">
+            <generatedKey column="id" sqlStatement="MySql" identity="true"/>
+        </table>
+        <table tableName="pms_product_attribute_value">
             <generatedKey column="id" sqlStatement="MySql" identity="true"/>
         </table>
     </context>
