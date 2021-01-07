@@ -5,7 +5,6 @@ import math
 class Env():
 
   lambda_d = 2
-  slot_cur = 0
   SLOT_LIMIT = 100
 
   def __init__(self, cue_num=50, vue_num=50, url='./env_2021_1_6'):
@@ -22,11 +21,38 @@ class Env():
                     {'a':12.7,    'b':0.296,  'r':9.332,  'r_idea':408},
                     {'a':15.12,   'b':0.121,  'r':13.508, 'r_idea':502}]
 
-  def update_state(self, vehicles, action): #action: p, s, l
-    self.slot_cur += 1
-    ps = action['p']
-    ss = action['s']
-    ls = action['l']
+  def reset(self, vehicles):
+    interfere_v2v = np.zeros(self.vue_num)
+    interfere_v2c = np.zeros(self.vue_num)
+    interfere_c2i = np.zeros(self.cue_num)
+    interfere_v2i = np.zeros(self.vue_num)
+
+    for k in range(self.vue_num):
+      vehicle = vehicles[k]
+      v2v_if = self.get_V2V(vehicle)
+      v2i_if = self.get_V2I(vehicle)
+      interfere_v2v[k] = v2v_if
+      interfere_v2i[k] = v2i_if
+
+    for i in range(self.cue_num):
+      c2i_if = self.get_C2I(vehicles[i])
+      interfere_c2i[i] = c2i_if
+
+    package_cur_re_af_trans = np.zeros(self.vue_num)  # package_cur_remain_after_trans
+    data_size_remains = np.zeros(self.vue_num)
+    for k in range(self.vue_num):
+      package_cur_re_af_trans[k] = vehicles[k].data[0][1]
+      data_size_remains[k] = np.sum(vehicles[k].data, axis=0)[1]
+
+    state = np.r_[interfere_v2v, interfere_v2i, interfere_v2c, interfere_c2i, package_cur_re_af_trans, data_size_remains]
+    return state
+
+  # 5,10,15,20,23
+
+  def update_state(self, slot_cur, vehicles, action): #action: p, s, l
+    ps = action[: self.vue_num]  # p
+    ss = action[self.vue_num : self.vue_num * 2]  # s
+    ls = action[self.vue_num * 2 :] # l
 
     interfere_v2v = np.zeros(self.vue_num)
     interfere_v2c = np.zeros(self.vue_num)
@@ -35,26 +61,27 @@ class Env():
 
     rs = []
     for k in range(self.vue_num):
+      s = ss[k]
       vehicle = vehicles[k]
       v2v_if = self.get_V2V(vehicle)
-      v2c_if = self.get_V2C(k, self.cue_num)
+      v2c_if = self.get_V2C(vehicle, vehicles[s])
       interfere_v2v[k] = v2v_if
       interfere_v2c[k] = v2c_if
-      s = ss[k]
-      r_ = ps[k] * np.power(np.abs(v2v_if),2) / (self.N0 + self.pc * np.power(np.abs(v2c_if[k][s])))
+      r_ = ps[k] * np.power(np.abs(v2v_if),2) / (self.N0 + self.pc * np.power(np.abs(v2c_if), 2))
       rs.append(r_)
 
     r_Is = [-1] * self.cue_num
     for k in range(self.vue_num):
       i = ss[k]
       v2i_if = self.get_V2I(vehicles[k])
-      c2i_if = self.get_C2I(i)
+      c2i_if = self.get_C2I(vehicles[i])
       interfere_v2i[k] = v2i_if
       interfere_c2i[k] = c2i_if
-      r_Is[i] = self.pc * np.power(np.abs(c2i_if, 2)) / (self.N0 + ps[k] * np.power(np.abs(v2i_if, 2)))
+      r_Is[i] = self.pc * np.power(np.abs(c2i_if), 2) / (self.N0 + ps[k] * np.power(np.abs(v2i_if), 2))
     for i in range(self.cue_num):
       if r_Is[i] == -1:
-        c2i_if = self.get_C2I(i)
+        vehicle = vehicles[i]
+        c2i_if = self.get_C2I(vehicle)
         interfere_c2i[k] = c2i_if
         r_Is[i] = self.pc * np.power(np.abs(c2i_if, 2)) / self.N0
 
@@ -66,12 +93,14 @@ class Env():
         betas[k] = self.model_ls[l]['a'] * np.power(np.e, - self.model_ls[l]['b'] * rs[k])
       r_ks[k] = self.model_ls[l]['r_idea'] * (1 - betas[k])
 
+    # return
     for k in range(self.vue_num):
-      vehicles[k].run(self.slot_cur, r_ks[k])
+      vehicles[k].trans_data(r_ks[k])
+
     end = False
     reward = np.sum(r_Is) + self.lambda_d * (self.vue_num - np.sum(betas))
     for vehicle in vehicles:
-      if len(vehicle.data) > 0 and self.slot_cur - vehicle.data[0][0] > self.SLOT_LIMIT:
+      if len(vehicle.data) > 0 and slot_cur - vehicle.data[0][0] > self.SLOT_LIMIT:
         end = True
         reward = -1
 
@@ -79,39 +108,38 @@ class Env():
     data_size_remains = np.zeros(self.vue_num)
     for k in range(self.vue_num):
       package_cur_re_af_trans[k] = vehicles[k].data[0][1]
-      data_size_remains[k] = np.sum(vehicles[k].data, axis=0)
+      data_size_remains[k] = np.sum(vehicles[k].data, axis=0)[1]
 
     state = np.r_[interfere_v2v, interfere_v2i, interfere_v2c, interfere_c2i, package_cur_re_af_trans, data_size_remains]
     return state, reward, end
 
+
   def get_V2V(self, vehicle):
-    return self.V2Vchannels.get_path_loss((vehicle.distance_v2v[1] - vehicle.distance_v2v[0]) * np.random.random_sample() + vehicle.distance_v2v[0])
+    return self.V2Vchannels.get_path_loss(vehicle.distance_v2v)
 
   def get_V2I(self, vehicle):
     return self.V2Ichannels.get_path_loss(vehicle.position)
 
-  def get_V2C(self, k, cue_num):
-    return [[0] * cue_num]
+  def get_V2C(self, vehicle_a, vehicle_b):
+    return self.V2Vchannels.get_path_loss(np.abs(vehicle_a.position - vehicle_b.position))
 
-  def get_C2I(self, i):
-    return 0
+  def get_C2I(self, vehicle):
+    return self.V2Ichannels.get_path_loss(vehicle.position)
 
 class V2V_Vehicle:
   # Vehicle simulator: include all the information for a vehicle
   
-  def __init__(self, start_position, velocity, distance_v2v, arrival_rate):
-    self.slot_cur = 0
+  def __init__(self, start_position, velocity_range, distance_range, arrival_rate):
     self.position = start_position
-    self.velocity = velocity
-    self.distance_v2v = distance_v2v
+    self.velocity_range = velocity_range
+    self.velocity = np.random.randint(velocity_range[0], velocity_range[1])
+    self.distance_range = distance_range
+    self.distance_v2v = np.random.randint(distance_range[0], distance_range[1])
     self.arrival_rate = arrival_rate
     self.data = []
-    self.data.append([self.slot_cur,np.random.poisson(self.arrival_rate)])
+    self.data.append([0,np.random.poisson(self.arrival_rate)])
 
-  def run(self, slot_cur, data_trans):
-    self.position += self.velocity
-    data_arrive = np.random.poisson(self.arrival_rate)
-    self.data.append([slot_cur,data_arrive])
+  def trans_data(self, data_trans):
     package_size = 0
     for i in range(len(self.data)):
       package_size += self.data[i][1]
@@ -119,6 +147,12 @@ class V2V_Vehicle:
         self.data[i][1] = package_size - data_trans
         break
     self.data = self.data[i:]
+
+  def run(self, slot_cur):
+    self.position += self.velocity
+    self.distance_v2v = np.random.randint(self.distance_range[0], self.distance_range[1])
+    data_arrive = np.random.poisson(self.arrival_rate)
+    self.data.append([slot_cur,data_arrive])
 
 class V2Vchannels:
 

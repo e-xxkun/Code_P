@@ -9,8 +9,9 @@ gym: 0.8.0
 """
 
 import numpy as np
-# import tensorflow as tf
 import tensorflow.compat.v1 as tf
+import pandas as pd
+
 tf.disable_eager_execution()
 
 np.random.seed(1)
@@ -132,6 +133,12 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
 
 
 class DQNPrioritizedReplay:
+
+    layer_1 = 1000
+    layer_2 = 700
+    layer_3 = 500
+
+
     def __init__(
             self,
             n_actions,
@@ -140,7 +147,7 @@ class DQNPrioritizedReplay:
             reward_decay=0.9,
             e_greedy=0.9,
             replace_target_iter=500,
-            memory_size=10000,
+            memory_size=1000,
             batch_size=32,
             e_greedy_increment=None,
             output_graph=False,
@@ -186,14 +193,24 @@ class DQNPrioritizedReplay:
     def _build_net(self):
         def build_layers(s, c_names, n_l1, w_initializer, b_initializer, trainable):
             with tf.variable_scope('l1'):
-                w1 = tf.get_variable('w1', [self.n_features, n_l1], initializer=w_initializer, collections=c_names, trainable=trainable)
-                b1 = tf.get_variable('b1', [1, n_l1], initializer=b_initializer, collections=c_names,  trainable=trainable)
+                w1 = tf.get_variable('w1', [self.n_features, self.layer_1], initializer=w_initializer, collections=c_names, trainable=trainable)
+                b1 = tf.get_variable('b1', [1, self.layer_1], initializer=b_initializer, collections=c_names,  trainable=trainable)
                 l1 = tf.nn.relu(tf.matmul(s, w1) + b1)
 
             with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w2', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names,  trainable=trainable)
-                b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names,  trainable=trainable)
-                out = tf.matmul(l1, w2) + b2
+                w2 = tf.get_variable('w2', [self.layer_1, self.layer_2], initializer=w_initializer, collections=c_names,  trainable=trainable)
+                b2 = tf.get_variable('b2', [1, self.layer_2], initializer=b_initializer, collections=c_names,  trainable=trainable)
+                l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
+
+            with tf.variable_scope('l3'):
+                w3 = tf.get_variable('w3', [self.layer_2, self.layer_3], initializer=w_initializer, collections=c_names,  trainable=trainable)
+                b3 = tf.get_variable('b3', [1, self.layer_3], initializer=b_initializer, collections=c_names,  trainable=trainable)
+                l3 = tf.nn.relu(tf.matmul(l2, w3) + b3)
+
+            with tf.variable_scope('l4'):
+                w4 = tf.get_variable('w4', [self.layer_3, self.n_actions], initializer=w_initializer, collections=c_names,  trainable=trainable)
+                b4 = tf.get_variable('b4', [1, self.n_actions], initializer=b_initializer, collections=c_names,  trainable=trainable)
+                out = tf.matmul(l3, w4) + b4
             return out
 
         # ------------------ build evaluate_net ------------------
@@ -203,7 +220,7 @@ class DQNPrioritizedReplay:
             self.ISWeights = tf.placeholder(tf.float32, [None, 1], name='IS_weights')
         with tf.variable_scope('eval_net'):
             c_names, n_l1, w_initializer, b_initializer = \
-                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20, \
+                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], self.n_features*2, \
                 tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
 
             self.q_eval = build_layers(self.s, c_names, n_l1, w_initializer, b_initializer, True)
@@ -239,9 +256,27 @@ class DQNPrioritizedReplay:
         observation = observation[np.newaxis, :]
         if np.random.uniform() < self.epsilon:
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
-            action = np.argmax(actions_value)
+            print('----o-----',actions_value.shape)
+            print('----o-----',actions_value)
+            fragment = int(self.n_actions/3)
+            p = actions_value[0, :fragment]
+            s = actions_value[0, fragment : fragment * 2]
+            l = actions_value[0, fragment * 2 :]
+            p[p < 1] = 1
+            p[p > 23] = 23
+            s = pd.cut(s, fragment, labels=False)
+            l[l < 0] = 0
+            l[l > 5] = 5
+            l = np.around(l)
         else:
-            action = np.random.randint(0, self.n_actions)
+            fragment = int(self.n_actions/3)
+            p = np.random.randint(0, 25, size=fragment)
+            s = np.arange(fragment)
+            np.random.shuffle(s)
+            l = np.random.randint(0, 6, size=fragment)
+
+        p = pd.cut(p, [0, 7,12,17,21,25], labels=[5, 10, 15, 20, 23])
+        action = np.r_[p, s, l].astype(np.int16)
         return action
 
     def learn(self):
