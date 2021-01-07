@@ -4,6 +4,10 @@ import math
 
 class Env():
 
+  lambda_d = 2
+  slot_cur = 0
+  SLOT_LIMIT = 100
+
   def __init__(self, cue_num=50, vue_num=50, url='./env_2021_1_6'):
     self.vue_num = vue_num
     self.cue_num = cue_num
@@ -18,32 +22,41 @@ class Env():
                     {'a':12.7,    'b':0.296,  'r':9.332,  'r_idea':408},
                     {'a':15.12,   'b':0.121,  'r':13.508, 'r_idea':502}]
 
-  # def generate(self, slot_num=1000, cue_num=50, vue_num=50, velocity=[30,40], distance_v2v=[70,80], url='./env_2021_1_6'):
-  #   self.V2Vchannels = V2Vchannels()
-  #   self.V2Ichannels = V2Ichannels()
-  #   envs = []
-
   def update_state(self, vehicles, action): #action: p, s, l
+    self.slot_cur += 1
     ps = action['p']
     ss = action['s']
     ls = action['l']
+
+    interfere_v2v = np.zeros(self.vue_num)
+    interfere_v2c = np.zeros(self.vue_num)
+    interfere_c2i = np.zeros(self.cue_num)
+    interfere_v2i = np.zeros(self.vue_num)
 
     rs = []
     for k in range(self.vue_num):
       vehicle = vehicles[k]
       v2v_if = self.get_V2V(vehicle)
       v2c_if = self.get_V2C(k, self.cue_num)
+      interfere_v2v[k] = v2v_if
+      interfere_v2c[k] = v2c_if
       s = ss[k]
       r_ = ps[k] * np.power(np.abs(v2v_if),2) / (self.N0 + self.pc * np.power(np.abs(v2c_if[k][s])))
       rs.append(r_)
 
-    r_Is = [0] * self.cue_num
+    r_Is = [-1] * self.cue_num
     for k in range(self.vue_num):
       i = ss[k]
-      r_Is[i] = self.pc * np.power(np.abs(self.get_C2I(i)), 2) / (self.N0 + ps[k] * np.power(np.abs(self.get_V2I(vehicles[k]), 2)))
+      v2i_if = self.get_V2I(vehicles[k])
+      c2i_if = self.get_C2I(i)
+      interfere_v2i[k] = v2i_if
+      interfere_c2i[k] = c2i_if
+      r_Is[i] = self.pc * np.power(np.abs(c2i_if, 2)) / (self.N0 + ps[k] * np.power(np.abs(v2i_if, 2)))
     for i in range(self.cue_num):
-      if r_Is[i] == 0:
-        r_Is[i] = self.pc * np.power(np.abs(self.get_C2I(i)), 2) / self.N0
+      if r_Is[i] == -1:
+        c2i_if = self.get_C2I(i)
+        interfere_c2i[k] = c2i_if
+        r_Is[i] = self.pc * np.power(np.abs(c2i_if, 2)) / self.N0
 
     betas = [1] * self.vue_num
     r_ks = [0] * self.vue_num
@@ -54,9 +67,22 @@ class Env():
       r_ks[k] = self.model_ls[l]['r_idea'] * (1 - betas[k])
 
     for k in range(self.vue_num):
-      vehicles[k].run(r_ks[k])
+      vehicles[k].run(self.slot_cur, r_ks[k])
+    end = False
+    reward = np.sum(r_Is) + self.lambda_d * (self.vue_num - np.sum(betas))
+    for vehicle in vehicles:
+      if len(vehicle.data) > 0 and self.slot_cur - vehicle.data[0][0] > self.SLOT_LIMIT:
+        end = True
+        reward = -1
 
-    return state, reward
+    package_cur_re_af_trans = np.zeros(self.vue_num)  # package_cur_remain_after_trans
+    data_size_remains = np.zeros(self.vue_num)
+    for k in range(self.vue_num):
+      package_cur_re_af_trans[k] = vehicles[k].data[0][1]
+      data_size_remains[k] = np.sum(vehicles[k].data, axis=0)
+
+    state = np.r_[interfere_v2v, interfere_v2i, interfere_v2c, interfere_c2i, package_cur_re_af_trans, data_size_remains]
+    return state, reward, end
 
   def get_V2V(self, vehicle):
     return self.V2Vchannels.get_path_loss((vehicle.distance_v2v[1] - vehicle.distance_v2v[0]) * np.random.random_sample() + vehicle.distance_v2v[0])
@@ -74,16 +100,25 @@ class V2V_Vehicle:
   # Vehicle simulator: include all the information for a vehicle
   
   def __init__(self, start_position, velocity, distance_v2v, arrival_rate):
+    self.slot_cur = 0
     self.position = start_position
     self.velocity = velocity
     self.distance_v2v = distance_v2v
     self.arrival_rate = arrival_rate
-    self.data = np.random.poisson(self.arrival_rate)
+    self.data = []
+    self.data.append([self.slot_cur,np.random.poisson(self.arrival_rate)])
 
-  def run(self, data_trans):
+  def run(self, slot_cur, data_trans):
     self.position += self.velocity
     data_arrive = np.random.poisson(self.arrival_rate)
-    self.data += data_arrive - data_trans
+    self.data.append([slot_cur,data_arrive])
+    package_size = 0
+    for i in range(len(self.data)):
+      package_size += self.data[i][1]
+      if package_size > data_trans:
+        self.data[i][1] = package_size - data_trans
+        break
+    self.data = self.data[i:]
 
 class V2Vchannels:
 
