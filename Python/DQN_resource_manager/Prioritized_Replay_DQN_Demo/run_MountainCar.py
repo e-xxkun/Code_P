@@ -18,7 +18,7 @@ import numpy as np
 env = gym.make('MountainCar-v0')
 env = env.unwrapped
 env.seed(21)
-MEMORY_SIZE = 10000
+MEMORY_SIZE = 100
 
 sess = tf.Session()
 # with tf.variable_scope('natural_DQN'):
@@ -43,7 +43,7 @@ def train(RL):
         observation = env.reset()
         print(observation)
         while True:
-            env.render()
+            # env.render()
 
             action = RL.choose_action(observation)
 

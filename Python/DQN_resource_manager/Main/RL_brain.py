@@ -131,7 +131,6 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
         for ti, p in zip(tree_idx, ps):
             self.tree.update(ti, p)
 
-
 class DQNPrioritizedReplay:
 
     layer_1 = 1000
@@ -256,27 +255,32 @@ class DQNPrioritizedReplay:
         observation = observation[np.newaxis, :]
         if np.random.uniform() < self.epsilon:
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
-            print('----o-----',actions_value.shape)
-            print('----o-----',actions_value)
-            fragment = int(self.n_actions/3)
-            p = actions_value[0, :fragment]
-            s = actions_value[0, fragment : fragment * 2]
-            l = actions_value[0, fragment * 2 :]
-            p[p < 1] = 1
-            p[p > 23] = 23
-            s = pd.cut(s, fragment, labels=False)
-            l[l < 0] = 0
-            l[l > 5] = 5
-            l = np.around(l)
+            action = np.argmax(actions_value)
         else:
-            fragment = int(self.n_actions/3)
-            p = np.random.randint(0, 25, size=fragment)
-            s = np.arange(fragment)
-            np.random.shuffle(s)
-            l = np.random.randint(0, 6, size=fragment)
+            action = np.random.randint(0, self.n_actions)
 
-        p = pd.cut(p, [0, 7,12,17,21,25], labels=[5, 10, 15, 20, 23])
-        action = np.r_[p, s, l].astype(np.int16)
+        #     print('----o-----',actions_value.shape)
+        #     print('----o-----',actions_value)
+        #     fragment = int(self.n_actions/3)
+        #     p = actions_value[0, :fragment]
+        #     s = actions_value[0, fragment : fragment * 2]
+        #     l = actions_value[0, fragment * 2 :]
+        #     p[p < 1] = 1
+        #     p[p > 23] = 23
+        #     s[s < 0] = 0
+        #     s[s > fragment-1] = fragment-1
+        #     s = np.around(s)
+        #     l[l < 0] = 0
+        #     l[l > 5] = 5
+        #     l = np.around(l)
+        #     fragment = int(self.n_actions/3)
+        #     p = np.random.randint(0, 25, size=fragment)
+        #     s = np.random.randint(0, fragment, size=fragment)
+        #     l = np.random.randint(0, 6, size=fragment)
+
+        # p = pd.cut(p, [0, 7,12,17,21,25], labels=[5, 10, 15, 20, 23])
+        # action = np.r_[p, s, l].astype(np.int16)
+        # print(action.shape)
         return action
 
     def learn(self):
@@ -317,3 +321,5 @@ class DQNPrioritizedReplay:
 
         self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
         self.learn_step_counter += 1
+
+        return self.cost

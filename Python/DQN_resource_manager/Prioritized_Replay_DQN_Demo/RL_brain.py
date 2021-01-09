@@ -120,6 +120,8 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
             idx, p, data = self.tree.get_leaf(v)
             prob = p / self.tree.total_p
             ISWeights[i, 0] = np.power(prob/min_prob, -self.beta)
+            print('---------------')
+            print('---',data)
             b_idx[i], b_memory[i, :] = idx, data
         return b_idx, b_memory, ISWeights
 
@@ -237,9 +239,12 @@ class DQNPrioritizedReplay:
 
     def choose_action(self, observation):
         observation = observation[np.newaxis, :]
-        if np.random.uniform() < self.epsilon:
+        if np.random.uniform() < self.epsilon or True:
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
+            print('------oo----',actions_value)
             action = np.argmax(actions_value)
+            print('------oo----',action)
+            raise 'pppppppppp'
         else:
             action = np.random.randint(0, self.n_actions)
         return action
