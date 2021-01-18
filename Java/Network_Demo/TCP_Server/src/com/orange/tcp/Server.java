@@ -17,7 +17,7 @@ public class Server {
 
         try {
             //这里的端口号可以自定义一个整型数，但必须和客户端设置的一致。
-            serverSocket = new ServerSocket(8888);
+            serverSocket = new ServerSocket(8808);
             System.out.println("服务端建立连接成功！！");
             //监听socket是否有数据，这个方法是阻塞式的
             Socket accept = serverSocket.accept();

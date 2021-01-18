@@ -16,7 +16,7 @@ public class Client {
         try {
             //设置通信连接配置
             //这里的端口号可以自定义一个整型数，但必须和服务端设置的一致。
-            socket = new Socket("localhost", 8888);
+            socket = new Socket("106.14.249.225", 8808);
             //读取socket连接的数据
             bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             //向连接发送数据
